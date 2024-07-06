@@ -1,6 +1,6 @@
-import {StatusDisplayComponent, MessageTypes} from './components/status-display.js';
-
-customElements.define('status-display', StatusDisplayComponent);
+import {
+  MessageTypes,
+} from "./components/status-display.js";
 
 class RetryManager {
   maxRetries;
@@ -11,7 +11,13 @@ class RetryManager {
   currentRetryCount;
   currentReconnectDelay;
 
-  constructor(maxRetries, retryDelay, onRetry, onMaxRetriesReached, onRetryCountdown) {
+  constructor(
+    maxRetries,
+    retryDelay,
+    onRetry,
+    onMaxRetriesReached,
+    onRetryCountdown
+  ) {
     // Configuration
     this.maxRetries = maxRetries;
     this.retryDelay = retryDelay;
@@ -50,34 +56,34 @@ class RetryManager {
       }
     };
     countdown();
-  }
+  };
 }
 
 function getWebSocketErrorDescription(code) {
   const errorDescriptions = {
-    1000: 'Normal Closure',
-    1001: 'Going Away',
-    1002: 'Protocol Error',
-    1003: 'Unsupported Data',
-    1005: 'No Status Received',
-    1006: 'Abnormal Closure',
-    1007: 'Invalid frame payload data',
-    1008: 'Policy Violation',
-    1009: 'Message too big',
-    1010: 'Missing Extension',
-    1011: 'Internal Error',
-    1015: 'TLS Handshake'
+    1000: "Normal Closure",
+    1001: "Going Away",
+    1002: "Protocol Error",
+    1003: "Unsupported Data",
+    1005: "No Status Received",
+    1006: "Abnormal Closure",
+    1007: "Invalid frame payload data",
+    1008: "Policy Violation",
+    1009: "Message too big",
+    1010: "Missing Extension",
+    1011: "Internal Error",
+    1015: "TLS Handshake",
   };
 
-  return errorDescriptions[code] || 'Unknown Error';
+  return errorDescriptions[code] || "Unknown Error";
 }
 
 const Status = Object.freeze({
-  CONNECTING: 'Connecting...',
-  CONNECTED: 'Connected',
-  ERROR: 'Error',
-  CLOSED: 'Closed',
-  RETRYING: 'Retrying...'
+  CONNECTING: "Connecting...",
+  CONNECTED: "Connected",
+  ERROR: "Error",
+  CLOSED: "Closed",
+  RETRYING: "Retrying...",
 });
 
 class WebSocketManager {
@@ -89,106 +95,138 @@ class WebSocketManager {
 
   constructor(url) {
     this.#url = url;
-    this.#retryManager = new RetryManager(3, 5, this.#initializeWebSocket, this.#onMaxRetriesReached, this.#onRetryCountdown);
-    this.#initializeWebSocket();
+    this.#retryManager = new RetryManager(
+      3,
+      5,
+      this.#initializeWebSocket,
+      this.#onMaxRetriesReached,
+      this.#onRetryCountdown
+    );
+
+    customElements.whenDefined('status-display').then(() => {
+      document.addEventListener('status-display-loaded', () => {
+        this.#initializeWebSocket();
+      });
+    });
   }
 
   #initializeWebSocket = () => {
-    console.log('Initializing WebSocket...');
-    this.#displayStatus(MessageTypes.INFO, 'Initializing WebSocket...');
+    console.log("Initializing WebSocket...");
+    this.#displayStatus(MessageTypes.INFO, "Initializing WebSocket...");
     this.status = Status.CONNECTING;
     this.#socket = new WebSocket(this.#url);
     this.#socket.onerror = this.#handleError;
     this.#socket.onclose = this.#handleClose;
     this.#socket.onopen = this.#handleOpen;
     this.#socket.onmessage = this.#handleMessage;
-    console.log('WebSocket initialized');
-  }
+    console.log("WebSocket initialized");
+  };
 
   #onRetryCountdown = (reconnectDelay) => {
-    console.log(`Retrying WebSocket connection in ${reconnectDelay} seconds...`);
-    this.#displayStatus(MessageTypes.LIVE_UPDATE, `Retrying... ${this.#retryManager.currentRetryCount}/${this.#retryManager.maxRetries} in ${this.#retryManager.currentReconnectDelay} seconds`)
-  }
+    console.log(
+      `Retrying WebSocket connection in ${reconnectDelay} seconds...`
+    );
+    this.#displayStatus(
+      MessageTypes.LIVE_UPDATE,
+      `Retrying... ${this.#retryManager.currentRetryCount}/${
+        this.#retryManager.maxRetries
+      } in ${this.#retryManager.currentReconnectDelay} seconds`
+    );
+  };
 
   #onMaxRetriesReached = () => {
     // make button connect
-    document.getElementById('connect').disabled = false;
-    document.getElementById('connect').textContent = 'Connect';
-    console.log('Max retries reached. Closing WebSocket connection...');
-    this.#displayStatus(MessageTypes.ERROR, 'Max retries reached. Closing WebSocket connection...');
+    document.getElementById("connect").disabled = false;
+    document.getElementById("connect").textContent = "Connect";
+    console.log("Max retries reached. Closing WebSocket connection...");
+    this.#displayStatus(
+      MessageTypes.ERROR,
+      "Max retries reached. Closing WebSocket connection..."
+    );
     this.#socket.close();
-  }
+  };
 
   #handleError = (error) => {
-    console.log('WebSocket Error: ', error);
+    console.log("WebSocket Error: ", error);
     this.status = Status.ERROR;
-    const message = error.message || 'Unknown Error';
+    const message = error.message || "Unknown Error";
     this.#displayStatus(MessageTypes.ERROR, message);
-  }
+  };
 
   #handleClose = (event) => {
     // make button disabled
-    document.getElementById('connect').disabled = false;
-    document.getElementById('connect').textContent = 'Connect';
-    console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
+    document.getElementById("connect").disabled = false;
+    document.getElementById("connect").textContent = "Connect";
+    console.log(
+      `WebSocket closed (code: ${event.code}). Attempting to reconnect...`
+    );
     this.status = Status.CLOSED;
-    this.#displayStatus(MessageTypes.WARNING, getWebSocketErrorDescription(event.code));
+    this.#displayStatus(
+      MessageTypes.WARNING,
+      getWebSocketErrorDescription(event.code)
+    );
     if (event.code !== 1000) {
       this.status = Status.RETRYING;
-      document.getElementById('connect').disabled = true;
+      document.getElementById("connect").disabled = true;
       this.#retryManager.attemptRetry();
     }
-  }
+  };
 
   #handleOpen = () => {
     // make button disconnect
-    document.getElementById('connect').disabled = false;
-    document.getElementById('connect').textContent = 'Disconnect';
-    console.log('WebSocket connection established');
+    document.getElementById("connect").disabled = false;
+    document.getElementById("connect").textContent = "Disconnect";
+    console.log("WebSocket connection established");
     this.status = Status.CONNECTED;
-    this.#displayStatus(MessageTypes.SUCCESS, 'WebSocket connection established');
+    this.#displayStatus(
+      MessageTypes.SUCCESS,
+      "WebSocket connection established"
+    );
     this.#retryManager.reset();
-  }
+  };
 
   #handleMessage = (event) => {
-    const messageDisplay = document.getElementById('messageDisplay');
-    messageDisplay.textContent = 'Message from server: ' + event.data;
-  }
+    const messageDisplay = document.getElementById("messageDisplay");
+    messageDisplay.textContent = "Message from server: " + event.data;
+  };
 
   #displayStatus = (message_type, message) => {
-    const statusDisplay = document.getElementById('connectionStatus');
+    const statusDisplay = document.getElementById("connectionStatus");
     statusDisplay.updateStatus(message_type, message);
-  }
+  };
 
   sendMessage = (message) => {
     if (this.#socket.readyState === WebSocket.OPEN) {
       this.#socket.send(message);
     } else {
-      console.log('WebSocket is not open. ReadyState:', this.#socket.readyState);
+      console.log(
+        "WebSocket is not open. ReadyState:",
+        this.#socket.readyState
+      );
     }
-  }
+  };
 
   toggle = () => {
     if (this.#socket.readyState === WebSocket.OPEN) {
-      console.log('Closing WebSocket connection...');
+      console.log("Closing WebSocket connection...");
       this.#socket.close(1000, "Closing connection by user request");
     } else {
-      console.log('Opening WebSocket connection...');
+      console.log("Opening WebSocket connection...");
       this.#retryManager.reset();
       this.#initializeWebSocket();
     }
-  }
+  };
 }
 
 function setupUIListeners(webSocketManager) {
-  document.getElementById('sendMessage').addEventListener('click', () => {
-    webSocketManager.sendMessage('Hello, server!');
+  document.getElementById("sendMessage").addEventListener("click", () => {
+    webSocketManager.sendMessage("Hello, server!");
   });
   // Make it disconnect if already connected
-  document.getElementById('connect').addEventListener('click', () => {
+  document.getElementById("connect").addEventListener("click", () => {
     webSocketManager.toggle();
   });
 }
 
-const webSocketManager = new WebSocketManager('ws://localhost:8765');
+const webSocketManager = new WebSocketManager("ws://localhost:8765");
 setupUIListeners(webSocketManager);
