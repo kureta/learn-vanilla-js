@@ -1,18 +1,25 @@
+import {StatusDisplayComponent, MessageTypes} from './components/status-display.js';
+
+customElements.define('status-display', StatusDisplayComponent);
+
 class RetryManager {
   maxRetries;
   retryDelay;
-  onRetry;
-  onMaxRetriesReached;
-  onRetryCountdown;
+  #onRetry;
+  #onMaxRetriesReached;
+  #onRetryCountdown;
   currentRetryCount;
   currentReconnectDelay;
 
   constructor(maxRetries, retryDelay, onRetry, onMaxRetriesReached, onRetryCountdown) {
+    // Configuration
     this.maxRetries = maxRetries;
     this.retryDelay = retryDelay;
-    this.onRetry = onRetry;
-    this.onMaxRetriesReached = onMaxRetriesReached;
-    this.onRetryCountdown = onRetryCountdown;
+    // Callbacks
+    this.#onRetry = onRetry;
+    this.#onMaxRetriesReached = onMaxRetriesReached;
+    this.#onRetryCountdown = onRetryCountdown;
+    // State variables
     this.currentRetryCount = 0;
     this.currentReconnectDelay = retryDelay;
   }
@@ -27,30 +34,43 @@ class RetryManager {
       this.currentReconnectDelay = this.retryDelay;
       this.#startRetryCountdown();
     } else {
-      this.onMaxRetriesReached();
+      this.#onMaxRetriesReached();
     }
   }
 
   #startRetryCountdown = () => {
     const countdown = () => {
       if (this.currentReconnectDelay > 0) {
-        // take an onRetryCountdown callback as a parameter
-        // find the correct place to reset reconnect delay
-        // we are setting a 1-second timout every second while decrementing reconnect delay until it reaches 0
-        this.onRetryCountdown(this.currentReconnectDelay);
+        // Set 1-second timout every second while decrementing reconnect delay until it reaches 0
+        this.#onRetryCountdown(this.currentReconnectDelay);
         this.currentReconnectDelay--;
         setTimeout(countdown, 1000);
       } else {
-        this.onRetry();
+        this.#onRetry();
       }
     };
     countdown();
   }
 }
 
-// Some status changes happen one after the other, so previous status is overwritten
-// Determine where to set status
-// Define a data structure for status where possible states are connected, connecting, error, closed, retrying
+function getWebSocketErrorDescription(code) {
+  const errorDescriptions = {
+    1000: 'Normal Closure',
+    1001: 'Going Away',
+    1002: 'Protocol Error',
+    1003: 'Unsupported Data',
+    1005: 'No Status Received',
+    1006: 'Abnormal Closure',
+    1007: 'Invalid frame payload data',
+    1008: 'Policy Violation',
+    1009: 'Message too big',
+    1010: 'Missing Extension',
+    1011: 'Internal Error',
+    1015: 'TLS Handshake'
+  };
+
+  return errorDescriptions[code] || 'Unknown Error';
+}
 
 const Status = Object.freeze({
   CONNECTING: 'Connecting...',
@@ -64,18 +84,18 @@ class WebSocketManager {
   #url;
   #socket;
   #retryManager;
+  // State variables
   status;
 
   constructor(url) {
     this.#url = url;
-    this.#retryManager = new RetryManager(3, 5, this.#onRetry, this.#onMaxRetriesReached, this.#onRetryCountdown);
-    // set status to connecting
+    this.#retryManager = new RetryManager(3, 5, this.#initializeWebSocket, this.#onMaxRetriesReached, this.#onRetryCountdown);
     this.#initializeWebSocket();
   }
 
   #initializeWebSocket = () => {
     console.log('Initializing WebSocket...');
-    this.#updateStatus('Connecting...');
+    this.#displayStatus(MessageTypes.INFO, 'Initializing WebSocket...');
     this.status = Status.CONNECTING;
     this.#socket = new WebSocket(this.#url);
     this.#socket.onerror = this.#handleError;
@@ -87,34 +107,46 @@ class WebSocketManager {
 
   #onRetryCountdown = (reconnectDelay) => {
     console.log(`Retrying WebSocket connection in ${reconnectDelay} seconds...`);
-    this.#updateStatus(`Retrying in ${reconnectDelay} seconds...`);
-  }
-
-  #onRetry = () => {
-    console.log('Retrying WebSocket connection...');
-    this.#initializeWebSocket();
+    this.#displayStatus(MessageTypes.LIVE_UPDATE, `Retrying... ${this.#retryManager.currentRetryCount}/${this.#retryManager.maxRetries} in ${this.#retryManager.currentReconnectDelay} seconds`)
   }
 
   #onMaxRetriesReached = () => {
+    // make button connect
+    document.getElementById('connect').disabled = false;
+    document.getElementById('connect').textContent = 'Connect';
     console.log('Max retries reached. Closing WebSocket connection...');
-    this.#updateStatus('Max retries reached');
+    this.#displayStatus(MessageTypes.ERROR, 'Max retries reached. Closing WebSocket connection...');
     this.#socket.close();
   }
 
   #handleError = (error) => {
-    console.log('WebSocket Error:', error);
-    this.#updateStatus('Error');
+    console.log('WebSocket Error: ', error);
+    this.status = Status.ERROR;
+    const message = error.message || 'Unknown Error';
+    this.#displayStatus(MessageTypes.ERROR, message);
   }
 
   #handleClose = (event) => {
+    // make button disabled
+    document.getElementById('connect').disabled = false;
+    document.getElementById('connect').textContent = 'Connect';
     console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
-    this.#updateStatus(`Retrying... ${this.#retryManager.currentRetryCount + 1}/${this.#retryManager.maxRetries}`);
-    this.#retryManager.attemptRetry();
+    this.status = Status.CLOSED;
+    this.#displayStatus(MessageTypes.WARNING, getWebSocketErrorDescription(event.code));
+    if (event.code !== 1000) {
+      this.status = Status.RETRYING;
+      document.getElementById('connect').disabled = true;
+      this.#retryManager.attemptRetry();
+    }
   }
 
   #handleOpen = () => {
+    // make button disconnect
+    document.getElementById('connect').disabled = false;
+    document.getElementById('connect').textContent = 'Disconnect';
     console.log('WebSocket connection established');
-    this.#updateStatus('Connected');
+    this.status = Status.CONNECTED;
+    this.#displayStatus(MessageTypes.SUCCESS, 'WebSocket connection established');
     this.#retryManager.reset();
   }
 
@@ -123,9 +155,9 @@ class WebSocketManager {
     messageDisplay.textContent = 'Message from server: ' + event.data;
   }
 
-  #updateStatus = (status) => {
+  #displayStatus = (message_type, message) => {
     const statusDisplay = document.getElementById('connectionStatus');
-    statusDisplay.textContent = 'Connection Status: ' + status;
+    statusDisplay.updateStatus(message_type, message);
   }
 
   sendMessage = (message) => {
@@ -136,9 +168,15 @@ class WebSocketManager {
     }
   }
 
-  connect = () => {
-    this.#retryManager.reset();
-    this.#initializeWebSocket();
+  toggle = () => {
+    if (this.#socket.readyState === WebSocket.OPEN) {
+      console.log('Closing WebSocket connection...');
+      this.#socket.close(1000, "Closing connection by user request");
+    } else {
+      console.log('Opening WebSocket connection...');
+      this.#retryManager.reset();
+      this.#initializeWebSocket();
+    }
   }
 }
 
@@ -148,7 +186,7 @@ function setupUIListeners(webSocketManager) {
   });
   // Make it disconnect if already connected
   document.getElementById('connect').addEventListener('click', () => {
-    webSocketManager.connect();
+    webSocketManager.toggle();
   });
 }
 
