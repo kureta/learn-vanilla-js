@@ -1,4 +1,4 @@
-import {LogLevel, makeEnum, RetryManager} from "../utils";
+import {LogLevel, RetryManager} from "../utils";
 
 function getWebSocketErrorDescription(code) {
   const errorDescriptions = {
@@ -16,13 +16,20 @@ function getWebSocketErrorDescription(code) {
     1015: "TLS Handshake",
   };
 
-  return errorDescriptions[code] || "Unknown Error";
+  return errorDescriptions[code] || `Unknown Error: ${code}`;
 }
 
 class WebSocketManager {
-  static Status = makeEnum("CONNECTING", "CONNECTED", "ERROR", "CLOSED", "RETRYING");
+  // static properties
+  static Status = Object.freeze({
+    CONNECTING: "CONNECTING",
+    CONNECTED: "CONNECTED",
+    ERROR: "ERROR",
+    CLOSED: "CLOSED",
+    RETRYING: "RETRYING",
+  });
   static instance = null;
-
+  // parameters
   #url;
   #socket;
   #retryManager;
@@ -119,7 +126,7 @@ class WebSocketManager {
     console.log("WebSocket connection established");
     this.status = WebSocketManager.Status.CONNECTED;
     this.#broadcastLog(
-      LogLevel.SUCCESS,
+      LogLevel.INFO,
       "WebSocket connection established"
     );
     this.#retryManager.reset();

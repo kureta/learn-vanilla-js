@@ -35,7 +35,7 @@ class LogDisplayComponent extends HTMLDivElement {
 
   updateLogs(message) {
     if (message.type !== "LOG_MESSAGE") return
-    this.textArea.value += `${message.content.log_level.description}: ${message.content.text}\n`;
+    this.textArea.value += `${message.content.log_level.toString()}: ${message.content.text}\n`;
     this.textArea.scrollTop = this.textArea.scrollHeight; // Auto-scroll to bottom
   }
 }

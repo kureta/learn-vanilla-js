@@ -1,12 +1,27 @@
-function makeEnum(properties) {
-  const obj = {};
-  for (const property of properties) {
-    obj[property] = Symbol(property);
+class LogLevel {
+  constructor(name, value) {
+    this.name = name;
+    this.value = value;
   }
-  return Object.freeze(obj);
+
+  toString() {
+    return this.name;
+  }
+
+  valueOf(){
+    return this.value;
+  }
+
+  static DEBUG = new LogLevel("DEBUG", 0);
+  static INFO = new LogLevel("INFO", 1);
+  static NOTICE = new LogLevel("NOTICE", 2);
+  static WARNING = new LogLevel("WARNING", 3);
+  static ERROR = new LogLevel("ERROR", 4);
+  static CRITICAL = new LogLevel("CRITICAL", 5);
+  static ALERT = new LogLevel("ALERT", 6);
+  static EMERGENCY = new LogLevel("EMERGENCY", 7);
 }
 
-const LogLevel = makeEnum(["ERROR", "INFO", "WARNING", "SUCCESS"]);
 
 class RetryManager {
   maxRetries;
@@ -65,4 +80,4 @@ class RetryManager {
   };
 }
 
-export {LogLevel, makeEnum, RetryManager};
+export {LogLevel, RetryManager};
