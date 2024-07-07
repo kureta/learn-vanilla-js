@@ -7,13 +7,14 @@ const MessageTypes = Object.freeze({
   LIVE_UPDATE: "live-update",
 });
 
-class StatusDisplayComponent extends HTMLElement {
+class StatusDisplayComponent extends HTMLDivElement {
   statusMessageBuffer;
   textArea;
 
   constructor() {
     super();
     this.statusMessageBuffer = new Array(5).fill("");
+    this.attachShadow({mode: "open"});
     this.loadTemplate().then(() => {
       console.log("Template loaded: status-display");
     });
@@ -24,14 +25,17 @@ class StatusDisplayComponent extends HTMLElement {
     if (!response.ok) {
       console.error("Failed to load template:");
     } else {
-      this.innerHTML = await response.text();
+      const templateElement = document.createElement('template');
+      templateElement.innerHTML = await response.text();
+      this.shadowRoot.appendChild(templateElement.content.cloneNode(true)); // Append to shadowRoot
+
       this.init();
-      this.dispatchEvent(new CustomEvent('status-display-loaded', { bubbles: true }));
+      this.dispatchEvent(new CustomEvent('status-display-loaded', {bubbles: true}));
     }
   }
 
   init() {
-    this.textArea = document.getElementById("statusMessage");
+    this.textArea = this.shadowRoot.querySelector("#statusMessage");
     this.textArea.rows = 10; // Number of rows
     this.textArea.cols = 50; // Number of columns
     this.textArea.value = "";
@@ -54,6 +58,6 @@ class StatusDisplayComponent extends HTMLElement {
   }
 }
 
-customElements.define("status-display", StatusDisplayComponent);
+customElements.define("status-display", StatusDisplayComponent, {extends: "div"});
 
 export {StatusDisplayComponent, MessageTypes};
