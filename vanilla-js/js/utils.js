@@ -30,7 +30,7 @@ class RetryManager {
   #onMaxRetriesReached;
   #onRetryCountdown;
   currentRetryCount;
-  currentReconnectDelay;
+  currentRetryDelay;
 
   constructor(
     maxRetries,
@@ -48,17 +48,18 @@ class RetryManager {
     this.#onRetryCountdown = onRetryCountdown;
     // State variables
     this.currentRetryCount = 0;
-    this.currentReconnectDelay = retryDelay;
+    this.currentRetryDelay = retryDelay;
   }
 
   reset() {
     this.currentRetryCount = 0;
+    this.currentRetryDelay = this.retryDelay;
   }
 
   attemptRetry() {
     if (this.currentRetryCount < this.maxRetries) {
       this.currentRetryCount++;
-      this.currentReconnectDelay = this.retryDelay;
+      this.currentRetryDelay = this.retryDelay;
       this.#startRetryCountdown();
     } else {
       this.#onMaxRetriesReached();
@@ -67,10 +68,10 @@ class RetryManager {
 
   #startRetryCountdown = () => {
     const countdown = () => {
-      if (this.currentReconnectDelay > 0) {
+      if (this.currentRetryDelay > 0) {
         // Set 1-second timout every second while decrementing reconnect delay until it reaches 0
-        this.#onRetryCountdown(this.currentReconnectDelay);
-        this.currentReconnectDelay--;
+        this.#onRetryCountdown(this.currentRetryDelay);
+        this.currentRetryDelay--;
         setTimeout(countdown, 1000);
       } else {
         this.#onRetry();

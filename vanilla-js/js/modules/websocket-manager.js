@@ -28,6 +28,7 @@ class WebSocketManager {
     CLOSED: "CLOSED",
     RETRYING: "RETRYING",
   });
+  // singleton instance
   static instance = null;
   // parameters
   #url;
@@ -48,93 +49,78 @@ class WebSocketManager {
       3,
       5,
       this.#initializeWebSocket,
-      this.#onMaxRetriesReached,
-      this.#onRetryCountdown
+      this.#handleMaxRetriesReached,
+      this.#handleRetryCountdown
     );
 
     this.#initializeWebSocket();
     WebSocketManager.instance = this;
   }
 
-  // yes
   #initializeWebSocket = () => {
     console.log("Initializing WebSocket...");
-    this.#broadcastLog(LogLevel.INFO, "Initializing WebSocket...");
+    this.#dispatchLogMessage(LogLevel.INFO, "Initializing WebSocket...");
     this.status = WebSocketManager.Status.CONNECTING;
+
     this.#socket = new WebSocket(this.#url);
     this.#socket.onerror = this.#handleError;
     this.#socket.onclose = this.#handleClose;
     this.#socket.onopen = this.#handleOpen;
     this.#socket.onmessage = this.#handleMessage;
-    console.log("WebSocket initialized");
   };
 
-  #onRetryCountdown = (reconnectDelay) => {
-    console.log(
-      `Retrying WebSocket connection in ${reconnectDelay} seconds...`
-    );
-    this.#broadcastLog(
-      LogLevel.INFO,
-      `Retrying... ${this.#retryManager.currentRetryCount}/${
-        this.#retryManager.maxRetries
-      } in ${this.#retryManager.currentReconnectDelay} seconds`
-    );
+  #handleRetryCountdown = (reconnectDelay) => {
+    console.log(`Retrying WebSocket connection in ${reconnectDelay} seconds...`);
+    const retries = `${this.#retryManager.currentRetryCount}/${this.#retryManager.maxRetries}`
+    this.#dispatchLogMessage(LogLevel.INFO, `Retrying... ${retries} in ${reconnectDelay} seconds`);
   };
 
-  #onMaxRetriesReached = () => {
+  #handleMaxRetriesReached = () => {
     console.log("Max retries reached. Closing WebSocket connection...");
-    this.#broadcastLog(
-      LogLevel.ERROR,
-      "Max retries reached. Closing WebSocket connection..."
-    );
+    this.#dispatchLogMessage(LogLevel.ERROR, "Max retries reached. Closing WebSocket connection...");
     this.#socket.close();
   };
 
-  // yes
   #handleError = (error) => {
     console.log("WebSocket Error: ", error);
     this.status = WebSocketManager.Status.ERROR;
     const message = error.message || "Unknown Error";
-    this.#broadcastLog(LogLevel.ERROR, message);
+    this.#dispatchLogMessage(LogLevel.ERROR, message);
   };
 
-  // yes
   #handleClose = (event) => {
     if (event.code === 1000) {
-      this.#broadcastLog(LogLevel.INFO, getWebSocketErrorDescription(event.code));
       console.log(`WebSocket closed normally`);
+      this.#dispatchLogMessage(LogLevel.INFO, getWebSocketErrorDescription(event.code));
       this.status = WebSocketManager.Status.CLOSED;
     } else {
-      this.#broadcastLog(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
       console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
+      this.#dispatchLogMessage(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
       this.status = WebSocketManager.Status.RETRYING;
       this.#retryManager.attemptRetry();
     }
   };
 
-  // yes
   #handleOpen = () => {
     console.log("WebSocket connection established");
     this.status = WebSocketManager.Status.CONNECTED;
-    this.#broadcastLog(
-      LogLevel.INFO,
-      "WebSocket connection established"
-    );
+    this.#dispatchLogMessage(LogLevel.INFO, "WebSocket connection established");
     this.#retryManager.reset();
   };
 
   #handleMessage = (event) => {
-    document.dispatchEvent(new CustomEvent('message-received', {
+    document.dispatchEvent(new CustomEvent('websocket-message-received', {
       detail: {
         message: event.data
       }
     }));
   };
 
-  #broadcastLog = (log_level, message) => {
+  #dispatchLogMessage = (log_level, message) => {
     document.dispatchEvent(new CustomEvent('log-update', {
       detail: {
         message: {
+          sender: "WebSocketManager",
           type: 'LOG_MESSAGE',
           content: {
             log_level: log_level,
@@ -169,7 +155,7 @@ class WebSocketManager {
     }
   };
 
-  toggle = () => {
+  toggleConnection = () => {
     if (this.#socket.readyState === WebSocket.OPEN) {
       console.log("Closing WebSocket connection...");
       this.#socket.close(1000, "Closing connection by user request");
