@@ -1,9 +1,9 @@
 import {WebSocketManager} from "./modules/websocket-manager.js";
-import {StatusDisplayComponent} from "./components/status-display.js";
+import {LogDisplayComponent} from "./components/log-display.js";
 
-// Explicitly reference StatusDisplayComponent to avoid unused import warning
-if (typeof StatusDisplayComponent === "undefined") {
-  console.warn("StatusDisplayComponent is not defined");
+// Explicitly reference LogDisplayComponent to avoid unused import warning
+if (typeof LogDisplayComponent === "undefined") {
+  console.warn("LogDisplayComponent is not defined");
 }
 
 // Function for connecting UI elements
@@ -16,8 +16,8 @@ function setupUIListeners(webSocketManager) {
   });
 }
 
-// Wait for the status-display component to load
-document.addEventListener('status-display-loaded', () => {
+// Wait for the log-display component to load
+document.addEventListener('log-display-loaded', () => {
   // Initialize WebSocketManager and set up UI listeners
   const webSocketManager = new WebSocketManager("ws://localhost:8765");
   setupUIListeners(webSocketManager);

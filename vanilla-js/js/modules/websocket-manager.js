@@ -51,7 +51,7 @@ class WebSocketManager {
   // yes
   #initializeWebSocket = () => {
     console.log("Initializing WebSocket...");
-    this.#broadcastStatus(LogLevel.INFO, "Initializing WebSocket...");
+    this.#broadcastLog(LogLevel.INFO, "Initializing WebSocket...");
     this.status = WebSocketManager.Status.CONNECTING;
     this.#socket = new WebSocket(this.#url);
     this.#socket.onerror = this.#handleError;
@@ -65,7 +65,7 @@ class WebSocketManager {
     console.log(
       `Retrying WebSocket connection in ${reconnectDelay} seconds...`
     );
-    this.#broadcastStatus(
+    this.#broadcastLog(
       LogLevel.INFO,
       `Retrying... ${this.#retryManager.currentRetryCount}/${
         this.#retryManager.maxRetries
@@ -78,7 +78,7 @@ class WebSocketManager {
     document.getElementById("connect").disabled = false;
     document.getElementById("connect").textContent = "Connect";
     console.log("Max retries reached. Closing WebSocket connection...");
-    this.#broadcastStatus(
+    this.#broadcastLog(
       LogLevel.ERROR,
       "Max retries reached. Closing WebSocket connection..."
     );
@@ -90,19 +90,19 @@ class WebSocketManager {
     console.log("WebSocket Error: ", error);
     this.status = WebSocketManager.Status.ERROR;
     const message = error.message || "Unknown Error";
-    this.#broadcastStatus(LogLevel.ERROR, message);
+    this.#broadcastLog(LogLevel.ERROR, message);
   };
 
   // yes
   #handleClose = (event) => {
     if (event.code !== 1000) {
-      this.#broadcastStatus(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
+      this.#broadcastLog(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
       console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
       this.status = WebSocketManager.Status.RETRYING;
       document.getElementById("connect").disabled = true;
       this.#retryManager.attemptRetry();
     } else {
-      this.#broadcastStatus(LogLevel.INFO, getWebSocketErrorDescription(event.code));
+      this.#broadcastLog(LogLevel.INFO, getWebSocketErrorDescription(event.code));
       document.getElementById("connect").disabled = false;
       document.getElementById("connect").textContent = "Connect";
       console.log(`WebSocket closed normally`);
@@ -118,7 +118,7 @@ class WebSocketManager {
     document.getElementById("connect").textContent = "Disconnect";
     console.log("WebSocket connection established");
     this.status = WebSocketManager.Status.CONNECTED;
-    this.#broadcastStatus(
+    this.#broadcastLog(
       LogLevel.SUCCESS,
       "WebSocket connection established"
     );
@@ -130,11 +130,11 @@ class WebSocketManager {
     messageDisplay.textContent = "Message from server: " + event.data;
   };
 
-  #broadcastStatus = (log_level, message) => {
-    document.dispatchEvent(new CustomEvent('status-update', {
+  #broadcastLog = (log_level, message) => {
+    document.dispatchEvent(new CustomEvent('log-update', {
       detail: {
         message: {
-          type: 'STATUS_MESSAGE',
+          type: 'LOG_MESSAGE',
           content: {
             log_level: log_level,
             text: message

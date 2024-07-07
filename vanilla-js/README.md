@@ -13,5 +13,6 @@ However, WebSocketManager is still coupled with the UI.
 It has its own internal state/status.
 Some outside code should manage the button states according to the WebSocketManager status.
 (Should I broadcast all WebSocketManager status changes?)
+Also decouple from message display.
 
 So far RetryManager seems fully decoupled.
