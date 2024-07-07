@@ -102,20 +102,19 @@ class WebSocketManager {
 
   // yes
   #handleClose = (event) => {
-    if (event.code !== 1000) {
-      this.#broadcastLog(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
-      console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
-      this.status = WebSocketManager.Status.RETRYING;
-      document.getElementById("connect").disabled = true;
-      this.#retryManager.attemptRetry();
-    } else {
+    if (event.code === 1000) {
       this.#broadcastLog(LogLevel.INFO, getWebSocketErrorDescription(event.code));
       document.getElementById("connect").disabled = false;
       document.getElementById("connect").textContent = "Connect";
       console.log(`WebSocket closed normally`);
       this.status = WebSocketManager.Status.CLOSED;
+    } else {
+      this.#broadcastLog(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
+      console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
+      this.status = WebSocketManager.Status.RETRYING;
+      document.getElementById("connect").disabled = true;
+      this.#retryManager.attemptRetry();
     }
-
   };
 
   // yes
