@@ -39,6 +39,9 @@ class StatusDisplayComponent extends HTMLDivElement {
     this.textArea.rows = 10; // Number of rows
     this.textArea.cols = 50; // Number of columns
     this.textArea.value = "";
+    document.addEventListener("status-update", (event) => {
+      this.updateStatus(event.detail.message_type, event.detail.message);
+    });
   }
 
   updateStatus(message_type, message) {

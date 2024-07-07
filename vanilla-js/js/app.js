@@ -103,16 +103,14 @@ class WebSocketManager {
       this.#onRetryCountdown
     );
 
-    customElements.whenDefined('status-display').then(() => {
       document.addEventListener('status-display-loaded', () => {
         this.#initializeWebSocket();
       });
-    });
   }
 
   #initializeWebSocket = () => {
     console.log("Initializing WebSocket...");
-    this.#displayStatus(MessageTypes.INFO, "Initializing WebSocket...");
+    this.#broadcastStatus(MessageTypes.INFO, "Initializing WebSocket...");
     this.status = Status.CONNECTING;
     this.#socket = new WebSocket(this.#url);
     this.#socket.onerror = this.#handleError;
@@ -126,7 +124,7 @@ class WebSocketManager {
     console.log(
       `Retrying WebSocket connection in ${reconnectDelay} seconds...`
     );
-    this.#displayStatus(
+    this.#broadcastStatus(
       MessageTypes.LIVE_UPDATE,
       `Retrying... ${this.#retryManager.currentRetryCount}/${
         this.#retryManager.maxRetries
@@ -139,7 +137,7 @@ class WebSocketManager {
     document.getElementById("connect").disabled = false;
     document.getElementById("connect").textContent = "Connect";
     console.log("Max retries reached. Closing WebSocket connection...");
-    this.#displayStatus(
+    this.#broadcastStatus(
       MessageTypes.ERROR,
       "Max retries reached. Closing WebSocket connection..."
     );
@@ -150,7 +148,7 @@ class WebSocketManager {
     console.log("WebSocket Error: ", error);
     this.status = Status.ERROR;
     const message = error.message || "Unknown Error";
-    this.#displayStatus(MessageTypes.ERROR, message);
+    this.#broadcastStatus(MessageTypes.ERROR, message);
   };
 
   #handleClose = (event) => {
@@ -161,7 +159,7 @@ class WebSocketManager {
       `WebSocket closed (code: ${event.code}). Attempting to reconnect...`
     );
     this.status = Status.CLOSED;
-    this.#displayStatus(
+    this.#broadcastStatus(
       MessageTypes.WARNING,
       getWebSocketErrorDescription(event.code)
     );
@@ -178,7 +176,7 @@ class WebSocketManager {
     document.getElementById("connect").textContent = "Disconnect";
     console.log("WebSocket connection established");
     this.status = Status.CONNECTED;
-    this.#displayStatus(
+    this.#broadcastStatus(
       MessageTypes.SUCCESS,
       "WebSocket connection established"
     );
@@ -190,9 +188,13 @@ class WebSocketManager {
     messageDisplay.textContent = "Message from server: " + event.data;
   };
 
-  #displayStatus = (message_type, message) => {
-    const statusDisplay = document.getElementById("connectionStatus");
-    statusDisplay.updateStatus(message_type, message);
+  #broadcastStatus = (message_type, message) => {
+    document.dispatchEvent(new CustomEvent('status-update', {
+      detail: {
+        message_type: message_type,
+        message: message
+      }
+    }));
   };
 
   sendMessage = (message) => {
