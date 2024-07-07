@@ -34,7 +34,7 @@ class WebSocketManager {
   #socket;
   #retryManager;
   // State variables
-  status;
+  #status;
 
   constructor(url) {
     if (WebSocketManager.instance) {
@@ -42,6 +42,7 @@ class WebSocketManager {
       return WebSocketManager.instance;
     }
 
+    this.status = WebSocketManager.Status.CLOSED;
     this.#url = url;
     this.#retryManager = new RetryManager(
       3,
@@ -81,9 +82,6 @@ class WebSocketManager {
   };
 
   #onMaxRetriesReached = () => {
-    // make button connect
-    document.getElementById("connect").disabled = false;
-    document.getElementById("connect").textContent = "Connect";
     console.log("Max retries reached. Closing WebSocket connection...");
     this.#broadcastLog(
       LogLevel.ERROR,
@@ -104,24 +102,18 @@ class WebSocketManager {
   #handleClose = (event) => {
     if (event.code === 1000) {
       this.#broadcastLog(LogLevel.INFO, getWebSocketErrorDescription(event.code));
-      document.getElementById("connect").disabled = false;
-      document.getElementById("connect").textContent = "Connect";
       console.log(`WebSocket closed normally`);
       this.status = WebSocketManager.Status.CLOSED;
     } else {
       this.#broadcastLog(LogLevel.ERROR, getWebSocketErrorDescription(event.code));
       console.log(`WebSocket closed (code: ${event.code}). Attempting to reconnect...`);
       this.status = WebSocketManager.Status.RETRYING;
-      document.getElementById("connect").disabled = true;
       this.#retryManager.attemptRetry();
     }
   };
 
   // yes
   #handleOpen = () => {
-    // make button disconnect
-    document.getElementById("connect").disabled = false;
-    document.getElementById("connect").textContent = "Disconnect";
     console.log("WebSocket connection established");
     this.status = WebSocketManager.Status.CONNECTED;
     this.#broadcastLog(
@@ -132,8 +124,11 @@ class WebSocketManager {
   };
 
   #handleMessage = (event) => {
-    const messageDisplay = document.getElementById("messageDisplay");
-    messageDisplay.textContent = "Message from server: " + event.data;
+    document.dispatchEvent(new CustomEvent('message-received', {
+      detail: {
+        message: event.data
+      }
+    }));
   };
 
   #broadcastLog = (log_level, message) => {
@@ -149,6 +144,19 @@ class WebSocketManager {
       }
     }));
   };
+
+  get status() {
+    return this.#status;
+  }
+
+  set status(newStatus) {
+    this.#status = newStatus;
+    document.dispatchEvent(new CustomEvent('websocket-status-update', {
+      detail: {
+        status: newStatus
+      }
+    }));
+  }
 
   sendMessage = (message) => {
     if (this.#socket.readyState === WebSocket.OPEN) {

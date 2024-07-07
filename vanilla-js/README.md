@@ -9,10 +9,11 @@ It just broadcasts a message with type `STATUS` and the StatusDisplay listens fo
 > TODO: add more information to status messages
 > Other components can also send status messages, so they should at least identify themselves
 
-However, WebSocketManager is still coupled with the UI.
-It has its own internal state/status.
-Some outside code should manage the button states according to the WebSocketManager status.
-(Should I broadcast all WebSocketManager status changes?)
-Also decouple from message display.
+UI state and message box are also decoupled from WebSocketManager.
 
 So far RetryManager seems fully decoupled.
+
+## Code hygiene
+
+> TODO: check all names. for example 'message-received' event should be
+> 'websocket-message-received' to prevent name clashes.

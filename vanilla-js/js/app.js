@@ -22,3 +22,36 @@ document.addEventListener('log-display-loaded', () => {
   const webSocketManager = new WebSocketManager("ws://localhost:8765");
   setupUIListeners(webSocketManager);
 });
+
+// Setup UI state based on WebSocket connection status
+document.addEventListener("websocket-status-update", (event) => {
+  console.log(event.detail);
+  const button = document.getElementById("connect");
+  switch (event.detail.status) {
+    case WebSocketManager.Status.CLOSED:
+      button.textContent = "Connect";
+      button.disabled = false;
+      break;
+    case WebSocketManager.Status.RETRYING || WebSocketManager.Status.CONNECTING:
+      button.textContent = "Connecting...";
+      button.disabled = true;
+      break;
+    case WebSocketManager.Status.CONNECTED:
+      button.textContent = "Disconnect";
+      button.disabled = false;
+      break;
+    case WebSocketManager.Status.ERROR:
+      button.textContent = "Error";
+      button.disabled = true;
+      break;
+    default:
+      button.textContent = "Unknown";
+      button.disabled = true;
+  }
+});
+
+// Listen to 'message-received' events and update "messageDisplay" element
+document.addEventListener('message-received', (event) => {
+  const messageDisplay = document.getElementById("messageDisplay");
+  messageDisplay.textContent = "Message from server: " + event.detail.message;
+});
