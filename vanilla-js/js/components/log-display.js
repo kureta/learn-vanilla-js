@@ -10,7 +10,13 @@ class LogDisplayComponent extends HTMLDivElement {
 
   clearLogMessages() {
     const logMessages = this.shadowRoot.getElementById('log-messages');
-    logMessages.innerHTML = '';
+    // Find all children with the specified class within the parent element
+    const childrenToRemove = logMessages.querySelectorAll('.log-message');
+
+    // Iterate over the list of elements and remove each one
+    childrenToRemove.forEach(child => {
+      logMessages.removeChild(child);
+    });
   }
 
   async loadTemplate() {

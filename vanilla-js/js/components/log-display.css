@@ -1,12 +1,9 @@
-.log-viewer {
+.log-messages {
   width: 60%;
   height: 300px;
   border: 1px solid #ccc;
   background-color: #fff;
   overflow: auto;
-}
-
-.log-messages {
   padding: 10px;
 }
 
