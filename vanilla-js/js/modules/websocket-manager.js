@@ -78,14 +78,15 @@ class WebSocketManager {
   #handleMaxRetriesReached = () => {
     console.log("Max retries reached. Closing WebSocket connection...");
     this.#dispatchLogMessage(LogLevel.ERROR, "Max retries reached. Closing WebSocket connection...");
+    this.status = WebSocketManager.Status.CLOSED;
     this.#socket.close();
   };
 
   #handleError = (error) => {
-    console.log("WebSocket Error: ", error);
-    this.status = WebSocketManager.Status.ERROR;
     const message = error.message || "Unknown Error";
+    console.log("WebSocket Error: ", message);
     this.#dispatchLogMessage(LogLevel.ERROR, message);
+    this.status = WebSocketManager.Status.ERROR;
   };
 
   #handleClose = (event) => {
