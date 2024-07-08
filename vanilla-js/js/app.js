@@ -25,7 +25,6 @@ document.addEventListener('log-display-loaded', () => {
 
 // Setup UI state based on WebSocket connection status
 document.addEventListener("websocket-status-update", (event) => {
-  console.log(event.detail);
   const connectButton = document.getElementById("connectButton");
   const sendButton = document.getElementById("sendButton");
   switch (event.detail.status) {
