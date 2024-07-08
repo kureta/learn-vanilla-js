@@ -1,6 +1,4 @@
 class LogDisplayComponent extends HTMLDivElement {
-  textArea;
-
   constructor() {
     super();
     this.attachShadow({mode: "open"});
@@ -24,19 +22,27 @@ class LogDisplayComponent extends HTMLDivElement {
   }
 
   init() {
-    this.textArea = this.shadowRoot.querySelector("#logDisplay");
-    this.textArea.rows = 10;
-    this.textArea.cols = 50;
-    this.textArea.value = "";
     document.addEventListener("log-update", (event) => {
       this.updateLogs(event.detail.message);
     });
   }
 
+  addLogMessage(level, message) {
+    const logMessages = this.shadowRoot.getElementById('log-messages');
+    const logMessage = document.createElement('div');
+    logMessage.className = `log-message ${level}`;
+    logMessage.textContent = `[${level.toUpperCase()}] ${message}`;
+    logMessages.appendChild(logMessage);
+
+    logMessage.scrollIntoView({behavior: "smooth"});
+  }
+
   updateLogs(message) {
     if (message.type !== "LOG_MESSAGE") return
-    this.textArea.value += `${message.content.log_level.toString()} (${message.sender}): ${message.content.text}\n`;
-    this.textArea.scrollTop = this.textArea.scrollHeight; // Auto-scroll to bottom
+    const log_level = message.content.log_level.toString().toLowerCase();
+    const content = `(${message.sender}}) ${message.content.text}`;
+
+    this.addLogMessage(log_level, content);
   }
 }
 

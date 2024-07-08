@@ -1,14 +1,44 @@
 <!-- status-display-component.html -->
 <style>
-  .log-display {
-    display: block;
+  .log-viewer {
+    width: 60%;
+    height: 300px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    overflow: auto;
+  }
+
+  .log-messages {
     padding: 10px;
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    margin-top: 10px;
-    width: 100%;
-    height: 20em;
+  }
+
+  .log-message {
+    padding: 5px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+  }
+
+  .log-message.info {
+    background-color: #d9edf7;
+    color: #31708f;
+  }
+
+  .log-message.warning {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+  }
+
+  .log-message.error {
+    background-color: #f2dede;
+    color: #a94442;
+  }
+
+  .log-message.debug {
+    background-color: #dff0d8;
+    color: #3c763d;
   }
 </style>
-<label for="logDisplay">Log Messages</label>
-<textarea id="logDisplay" class="log-display" readonly>Initializing...</textarea>
+<div class="log-viewer">
+  <div id="log-messages" class="log-messages">
+  </div>
+</div>
