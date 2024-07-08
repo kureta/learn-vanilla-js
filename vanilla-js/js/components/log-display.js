@@ -46,7 +46,7 @@ class LogDisplayComponent extends HTMLDivElement {
   updateLogs(message) {
     if (message.type !== "LOG_MESSAGE") return
     const log_level = message.content.log_level.toString().toLowerCase();
-    const content = `(${message.sender}}) ${message.content.text}`;
+    const content = `(${message.sender}) ${message.content.text}`;
 
     this.addLogMessage(log_level, content);
   }
