@@ -8,6 +8,11 @@ class LogDisplayComponent extends HTMLDivElement {
     });
   }
 
+  clearLogMessages() {
+    const logMessages = this.shadowRoot.getElementById('log-messages');
+    logMessages.innerHTML = '';
+  }
+
   async loadTemplate() {
     const response = await fetch("js/components/log-display.html");
     if (!response.ok) {
@@ -22,6 +27,7 @@ class LogDisplayComponent extends HTMLDivElement {
   }
 
   init() {
+    this.clearLogMessages();
     document.addEventListener("log-update", (event) => {
       this.updateLogs(event.detail.message);
     });

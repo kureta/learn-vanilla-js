@@ -1,4 +1,5 @@
 <!-- status-display-component.html -->
+<meta charset="UTF-8"/> <!-- For webstorm to show emojis -->
 <style>
   .log-viewer {
     width: 60%;
@@ -18,27 +19,95 @@
     border-radius: 3px;
   }
 
+  /* Info level */
   .log-message.info {
     background-color: #d9edf7;
     color: #31708f;
   }
 
+  .log-message.info::before {
+    content: "🛈 ";
+  }
+
+  /* Warning level */
   .log-message.warning {
     background-color: #fcf8e3;
     color: #8a6d3b;
   }
 
+  .log-message.warning::before {
+    content: "⚠️ ";
+  }
+
+  /* Error level */
   .log-message.error {
     background-color: #f2dede;
     color: #a94442;
   }
 
+  .log-message.error::before {
+    content: "❌ ";
+  }
+
+  /* Debug level */
   .log-message.debug {
     background-color: #dff0d8;
     color: #3c763d;
   }
+
+  .log-message.debug::before {
+    content: "🐞 ";
+  }
+
+  /* Critical level */
+  .log-message.critical {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .log-message.critical::before {
+    content: "🚨 ";
+  }
+
+  /* Notice level */
+  .log-message.notice {
+    background-color: #e2e3e5;
+    color: #383d41;
+  }
+
+  .log-message.notice::before {
+    content: "📌 ";
+  }
+
+  /* Alert level */
+  .log-message.alert {
+    background-color: #f5c6cb;
+    color: #721c24;
+  }
+
+  .log-message.alert::before {
+    content: "🔔 ";
+  }
+
+  /* Emergency level */
+  .log-message.emergency {
+    background-color: #f5c6cb;
+    color: #721c24;
+  }
+
+  .log-message.emergency::before {
+    content: "🚑 ";
+  }
 </style>
 <div class="log-viewer">
   <div id="log-messages" class="log-messages">
+    <div class="log-message debug">[debug] User authentication successful.</div>
+    <div class="log-message info">[info] Application started.</div>
+    <div class="log-message notice">[notice] New user signup.</div>
+    <div class="log-message warning">[warning] Low disk space.</div>
+    <div class="log-message error">[error] Failed to load resource.</div>
+    <div class="log-message critical">[critical] System crash imminent.</div>
+    <div class="log-message alert">[alert] System overload.</div>
+    <div class="log-message emergency">[emergency] Immediate action required.</div>
   </div>
 </div>
