@@ -14,7 +14,7 @@ class LogDisplayComponent extends HTMLDivElement {
   }
 
   async loadTemplate() {
-    const response = await fetch("js/components/log-display.html");
+    const response = await fetch("/js/components/log-display.html");
     if (!response.ok) {
       console.error("Failed to load template:");
     } else {
