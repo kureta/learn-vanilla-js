@@ -1,6 +1,7 @@
 .log-messages {
   border: 1px solid #ccc;
-  background-color: #fff;
+  background-color: var(--bg-color, #fff);
+  font-family: var(--primary-font, Arial), sans-serif;
   overflow: auto;
   height: 100%;
   width: 100%;

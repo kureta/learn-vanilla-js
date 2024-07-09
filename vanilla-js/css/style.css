@@ -1,4 +1,28 @@
+:root {
+  --bg-color: #f0f0f0;
+  --primary-font: Arial;
+}
+
 #connectionStatus {
-  width: 60%;
-  height: 300px;
+  width: 100%;
+  height: 20rem;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--primary-font), sans-serif;
+  background-color: var(--bg-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#app {
+  width: 80%;
+  height: 80%;
 }
