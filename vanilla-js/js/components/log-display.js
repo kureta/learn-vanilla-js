@@ -1,7 +1,9 @@
 class LogDisplayComponent extends HTMLDivElement {
+  #shadowRoot
+
   constructor() {
     super();
-    this.attachShadow({mode: "open"});
+    this.#shadowRoot = this.attachShadow({mode: "closed"});
     this.loadTemplate().then(() => {
       console.log("Template loaded: log-display");
       this.dispatchEvent(new CustomEvent('log-display-loaded', {bubbles: true}));
@@ -9,7 +11,7 @@ class LogDisplayComponent extends HTMLDivElement {
   }
 
   clearLogMessages() {
-    const logMessages = this.shadowRoot.getElementById('log-messages');
+    const logMessages = this.#shadowRoot.getElementById('log-messages');
     // Find all children with the specified class within the parent element
     const childrenToRemove = logMessages.querySelectorAll('.log-message');
 
@@ -26,7 +28,7 @@ class LogDisplayComponent extends HTMLDivElement {
     } else {
       const templateElement = document.createElement('template');
       templateElement.innerHTML = await response.text();
-      this.shadowRoot.appendChild(templateElement.content.cloneNode(true)); // Append to shadowRoot
+      this.#shadowRoot.appendChild(templateElement.content.cloneNode(true)); // Append to shadowRoot
 
       this.init();
     }
@@ -40,7 +42,7 @@ class LogDisplayComponent extends HTMLDivElement {
   }
 
   addLogMessage(level, message) {
-    const logMessages = this.shadowRoot.getElementById('log-messages');
+    const logMessages = this.#shadowRoot.getElementById('log-messages');
     const logMessage = document.createElement('div');
     logMessage.className = `log-message ${level}`;
     logMessage.textContent = `[${level.toUpperCase()}] ${message}`;
